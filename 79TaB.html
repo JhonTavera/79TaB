@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Juego Pantalla Completa - Selección de Números</title>
+  <!-- Importa las fuentes: Orbitron para el cuerpo y Audiowide para botones -->
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Audiowide&display=swap" rel="stylesheet">
+  <style>
+    /* ================================================
+       CONFIGURACIÓN GENERAL: Pantalla completa
+       ================================================ */
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden; /* Evita scrollbars */
+      font-family: 'Orbitron', sans-serif;
+      position: relative;
+    }
+    .menuBtn, .optionBtn, #comenzarBtn, #startBtn {
+      font-family: 'Audiowide', sans-serif;
+    }
+    /* ================================================
+       VIDEO DE FONDO (Pantalla de inicio)
+       ================================================ */
+    #bgVideo {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+    }
+    /* ================================================
+       BOTÓN "COMENZAR" (Pantalla de inicio)
+       ================================================ */
+    #comenzarBtn {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 200px;
+      background-color: rgba(158, 10, 243, 0.2);
+      color: hsl(182, 100%, 60%);
+      font-size: 5rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 10px fuchsia;
+      transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+      z-index: 5;
+    }
+    #comenzarBtn:hover {
+      transform: translateX(-50%) scale(1.1);
+      box-shadow: 0 0 20px rgb(43, 255, 0);
+      background-color: #ff00ffcc;
+    }
+    /* ================================================
+       MENÚ DE OPCIONES (Pantalla de inicio)
+       ================================================ */
+    #menuOpciones {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      flex-direction: row;
+      gap: 1rem;
+      z-index: 5;
+    }
+    .menuBtn {
+      width: 450px;
+      height: 150px;
+      background-color: rgba(0, 0, 0, 0.2);
+      color: #0efc2d;
+      font-size: 3.5rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgb(7, 233, 26);
+      transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+    }
+    .menuBtn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 20px fuchsia;
+      background-color: rgba(94, 7, 233, 0.4);
+    }
+    /* Botón "Start" (para iniciar el juego) */
+    #startBtn {
+      position: absolute;
+      bottom: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      height: 100px;
+      background-color: rgba(241, 10, 10, 0.95);
+      color: #fff;
+      font-size: 5rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgb(251, 255, 0);
+      transition: transform 0.3s, box-shadow 0.3s, background-color 0.3s;
+      display: none;
+      z-index: 5;
+    }
+    #startBtn:hover {
+      transform: translateX(-50%) scale(1.1);
+      box-shadow: 0 0 20px red;
+      background-color: #ff0000cc;
+    }
+    /* ================================================
+       PANELES DE OPCIONES
+       ================================================ */
+    .subPanel {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none;
+      background-color: rgba(0,0,0,0.7);
+      padding: 1rem;
+      border-radius: 10px;
+      color: #fff;
+      z-index: 5;
+    }
+    .optionBtn {
+      width: 120px;
+      height: 50px;
+      margin: 0.5rem;
+      background-color: rgba(255,255,255,0.2);
+      border: 2px solid #fff;
+      color: #fff;
+      font-size: 1.2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.2s;
+    }
+    .optionBtn:hover {
+      transform: scale(1.1);
+      background-color: #ff6b6b;
+    }
+    /* ================================================
+       SECCIÓN DE LA RULETA (Pantalla de juego)
+       ================================================ */
+    #ruletaSection {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background-color: rgba(255,255,255,-1);
+      z-index: 10;
+    }
+    /* Imagen Tapete */
+    #tapete {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      width: 53vw; 
+      height: auto;
+    }
+    /* Imagen central superior */
+    #centerTopImg {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 2;
+      width: 53vw; 
+      height: auto;
+    }
+    /* Divs para ubicar números en las esquinas */
+    .corner {
+      position: absolute;
+      font-size: 18rem;
+      z-index: 3;
+      color: #fff;
+      font-family: 'Audiowide', sans-serif;
+    }
+    #topLeft { top: 10px; left: 10px; }
+    #topRight { top: 10px; right: 10px; }
+    #bottomLeft { bottom: 10px; left: 10px; }
+    #bottomRight { bottom: 10px; right: 10px; }
+    /* Temporizador */
+    #timer {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.5rem;
+      z-index: 3;
+      color: #fff;
+    }
+    /* Área para mostrar números (opcional) */
+    #displayNumbers {
+      font-size: 4rem;
+      font-weight: bold;
+      color: #000;
+      margin-top: 2rem;
+      text-align: center;
+    }
+
+        /* Efecto de pulso para imágenes y números */
+      @keyframes pulse1 {
+      0% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.1);
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+
+    @keyframes pulse2 {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.1);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    /* Aplica el efecto a las imágenes centrales y al tapete */
+    #centerTopImg,
+    #tapete {
+      animation: pulse1 3s infinite;
+    }
+
+    /* Aplica el efecto a los números en las esquinas */
+    .corner {
+      animation: pulse2 1s infinite;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- VIDEO DE FONDO -->
+  <video id="bgVideo" autoplay loop muted playsinline>
+    <source src="background.mp4" type="video/mp4">
+    Tu navegador no soporta videos HTML5.
+  </video>
+
+  <!-- BOTÓN "COMENZAR" -->
+  <button id="comenzarBtn">Comenzar</button>
+
+  <!-- MENÚ DE OPCIONES -->
+  <div id="menuOpciones">
+    <button class="menuBtn" id="btnDificultad">Dificultad</button>
+    <button class="menuBtn" id="btnParticipantes">Participantes</button>
+    <button class="menuBtn" id="btnRondas">Rondas</button>
+    <button id="startBtn">Start</button>
+  </div>
+
+  <!-- PANELES DE SUB-OPCIONES -->
+  <div id="panelDificultad" class="subPanel">
+    <button class="optionBtn" data-value="ligero">Ligero</button>
+    <button class="optionBtn" data-value="normal">Normal</button>
+  </div>
+  <div id="panelParticipantes" class="subPanel">
+    <button class="optionBtn" data-value="1">1</button>
+    <button class="optionBtn" data-value="2">2</button>
+    <button class="optionBtn" data-value="3">3</button>
+    <button class="optionBtn" data-value="4">4</button>
+    <button class="optionBtn" data-value="5">5</button>
+  </div>
+  <div id="panelRondas" class="subPanel">
+    <button class="optionBtn" data-value="2">2</button>
+    <button class="optionBtn" data-value="3">3</button>
+    <button class="optionBtn" data-value="4">4</button>
+    <button class="optionBtn" data-value="5">5</button>
+    <button class="optionBtn" data-value="6">6</button>
+  </div>
+
+  <!-- SECCIÓN DE LA RULETA -->
+  <div id="ruletaSection">
+    <img id="tapete" src="Tapete.png" alt="Tapete">
+    <img id="centerTopImg" src="1.png" alt="Imagen Superior">
+    <div id="topLeft" class="corner"></div>
+    <div id="topRight" class="corner"></div>
+    <div id="bottomLeft" class="corner"></div>
+    <div id="bottomRight" class="corner"></div>
+    <div id="timer">30s</div>
+    <div id="displayNumbers"></div>
+  </div>
+
+  <!-- AUDIOS -->
+  <audio id="startGameSound" src="startGame.mp3"></audio>
+  <audio id="optionChangeSound" src="optionChange.mp3"></audio>
+  <audio id="ruletaSound" src="ruleta.mp3"></audio>
+  <audio id="relaxSound" src="relax.mp3"></audio>
+  <audio id="normalSound" src="normal.mp3"></audio>
+  <audio id="countdownSound" src="cuenta_regresiva.mp3"></audio>
+  <audio id="arcoirisSound" src="cuentaarcoiris.mp3"></audio>
+  <audio id="hoverSound" src="hover.mp3"></audio>
+
+  <script>
+    /* ================================================
+       Sonidos para botones
+       ================================================ */
+    document.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        optionChangeSound.currentTime = 0;
+        optionChangeSound.play();
+      });
+    });
+
+    /* ================================================
+       Variables de configuración
+       ================================================ */
+    let dificultadSeleccionada = null;
+    let participantesSeleccionados = null;
+    let rondasSeleccionadas = null;
+    let stageOneNumbers = []; // Guardará los números seleccionados en la Etapa 1
+    // Array de números y frecuencias para modo ligero (si lo usabas antes como "numbersDataGlobal")
+const numbersDataLight = [
+  { num: 6,  freq: 1 },
+  { num: 8,  freq: 2 },
+  { num: 10, freq: 3 },
+  { num: 12, freq: 2 },
+  { num: 14, freq: 3 },
+  { num: 16, freq: 4 },
+  { num: 18, freq: 4 },
+  { num: 20, freq: 4 },
+  { num: 22, freq: 3 },
+  { num: 24, freq: 4 },
+  { num: 26, freq: 1 },
+  { num: 28, freq: 2 },
+  { num: 30, freq: 2 },
+  { num: 34, freq: 1 },
+  { num: 36,  freq: 8 },
+  { num: 38,  freq: 3 },
+  { num: 40,  freq: 6 },
+  { num: 42,  freq: 8 },
+  { num: 44,  freq: 6 },
+  { num: 46,  freq: 7 },
+  { num: 48,  freq: 10 },
+  { num: 50,  freq: 8 },
+  { num: 52,  freq: 6 },
+  { num: 54,  freq: 10 },
+  { num: 56,  freq: 6 },
+  { num: 58,  freq: 7 },
+  { num: 60,  freq: 12 },
+  { num: 62,  freq: 5 },
+  { num: 64,  freq: 10 },
+  { num: 66,  freq: 12 },
+];
+
+// Array de números y frecuencias para modo normal
+const numbersDataNormal = [
+  { num: 6,   freq: 1 },
+  { num: 8,   freq: 2 },
+  { num: 10,  freq: 3 },
+  { num: 12,  freq: 2 },
+  { num: 14,  freq: 3 },
+  { num: 16,  freq: 4 },
+  { num: 18,  freq: 4 },
+  { num: 20,  freq: 4 },
+  { num: 22,  freq: 5 },
+  { num: 24,  freq: 6 },
+  { num: 26,  freq: 5 },
+  { num: 28,  freq: 4 },
+  { num: 30,  freq: 6 },
+  { num: 32,  freq: 4 },
+  { num: 34,  freq: 7 },
+  { num: 36,  freq: 8 },
+  { num: 38,  freq: 3 },
+  { num: 40,  freq: 6 },
+  { num: 42,  freq: 8 },
+  { num: 44,  freq: 6 },
+  { num: 46,  freq: 7 },
+  { num: 48,  freq: 10 },
+  { num: 50,  freq: 8 },
+  { num: 52,  freq: 6 },
+  { num: 54,  freq: 10 },
+  { num: 56,  freq: 6 },
+  { num: 58,  freq: 7 },
+  { num: 60,  freq: 12 },
+  { num: 62,  freq: 5 },
+  { num: 64,  freq: 10 },
+  { num: 66,  freq: 12 },
+  { num: 68,  freq: 4 },
+  { num: 70,  freq: 10 },
+  { num: 72,  freq: 12 },
+  { num: 74,  freq: 9 },
+  { num: 76,  freq: 10 },
+  { num: 78,  freq: 14 },
+  { num: 80,  freq: 8 },
+  { num: 82,  freq: 9 },
+  { num: 84,  freq: 16 },
+  { num: 86,  freq: 7 },
+  { num: 88,  freq: 6 },
+  { num: 90,  freq: 16 },
+  { num: 92,  freq: 6 },
+  { num: 94,  freq: 5 },
+  { num: 96,  freq: 10 },
+  { num: 98,  freq: 6 },
+  { num: 100, freq: 6 },
+  { num: 102, freq: 10 },
+  { num: 104, freq: 6 },
+  { num: 106, freq: 3 },
+  { num: 108, freq: 8 },
+  { num: 110, freq: 6 },
+  { num: 112, freq: 4 },
+  { num: 114, freq: 8 },
+  { num: 116, freq: 4 },
+  { num: 118, freq: 3 },
+  { num: 120, freq: 8 },
+  { num: 122, freq: 3 },
+  { num: 124, freq: 2 },
+  { num: 126, freq: 6 },
+  { num: 128, freq: 2 },
+  { num: 130, freq: 2 },
+  { num: 132, freq: 6 },
+  { num: 134, freq: 3 },
+  { num: 138, freq: 4 },
+  { num: 140, freq: 4 },
+  { num: 142, freq: 1 },
+  { num: 144, freq: 2 },
+  { num: 146, freq: 3 },
+  { num: 150, freq: 2 },
+  { num: 152, freq: 2 },
+  { num: 158, freq: 1 }
+];
+
+
+const even_primes_dict = {
+  6: [3],
+  8: [3, 5],
+  10: [3, 5, 7],
+  12: [5, 7],
+  14: [3, 7, 11],
+  16: [3, 5, 11, 13],
+  18: [5, 7, 11, 13],
+  20: [3, 7, 13, 17],
+  22: [3, 5, 11, 17, 19],
+  24: [5, 7, 11, 13, 17, 19],
+  26: [3, 7, 13, 19, 23],
+  28: [5, 11, 17, 23],
+  30: [7, 11, 13, 17, 19, 23],
+  32: [3, 13, 19, 29],
+  34: [5, 11, 17, 23, 29],
+  36: [5, 7, 13, 17, 19, 23, 29, 31],
+  38: [7, 19, 31],
+  40: [3, 11, 17, 23, 29, 37],
+  42: [5, 11, 13, 19, 23, 29, 31, 37],
+  44: [7, 13, 31, 37, 41],
+  46: [5, 17, 23, 29, 41],
+  48: [5, 7, 11, 17, 19, 29, 31, 37, 41, 43],
+  50: [3,7, 13, 19, 31, 37, 43, 47],
+  52: [5, 11, 23, 29, 41, 47],
+  54: [7, 11, 13, 17, 23, 31, 37, 41, 43, 47],
+  56: [3, 13, 19, 37, 43, 53],
+  58: [5, 11, 17, 29, 41, 47, 53],
+  60: [7, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47],
+  62: [3, 19, 31, 43, 59],
+  64: [5, 11, 17, 23, 47, 53, 59],
+  66: [5, 7, 13, 19, 23, 29, 37, 43, 47, 53, 59, 61],
+  68: [7, 31, 37, 61],
+  70: [3, 11, 17, 23, 29, 41, 47, 53, 59, 67],
+  72: [5, 11, 13, 19, 29, 31, 41, 43, 53, 59, 61, 67],
+  74: [3, 7, 13, 31, 37, 43, 61, 67, 71],
+  76: [3, 5, 17, 23, 29, 47, 53, 59, 71, 73],
+  78: [5, 7, 11, 17, 19, 31, 37, 41, 47, 59, 61, 67, 71, 73],
+  80: [7, 13, 19, 37, 43, 61, 67, 73],
+  82: [3, 11, 23, 29, 41, 53, 59, 71, 79],
+  84: [5, 11, 13, 17, 23, 31, 37, 41, 43, 47, 53, 61, 67, 71, 73, 79],
+  86: [7, 13, 19, 43, 67, 73, 79],
+  88: [17, 29, 41, 47, 59, 71],
+  90: [11, 17, 19, 23, 29, 31, 37, 43, 47, 53, 59, 61, 67, 71, 73, 79],
+  92: [13, 19, 31, 61, 73, 79],
+  94: [23, 41, 47, 53, 71],
+  96: [17, 23, 29, 37, 43, 53, 59, 67, 73, 79],
+  98: [19, 31, 37, 61, 67, 79],
+  100: [29, 41, 47, 53, 59, 71],
+  102: [23, 29, 31, 41, 43, 59, 61, 71, 73, 79],
+  104: [31, 37, 43, 61, 67, 73],
+  106: [47, 53, 59],
+  108: [29, 41, 47, 61, 67, 71, 79],
+  110: [31, 37, 43, 73, 79],
+  112: [41, 53, 59, 71],
+  114: [41, 43, 47, 53, 61, 67, 71, 73],
+  116: [37, 43, 73, 79],
+  118: [47, 59, 71],
+  120: [41, 47, 53, 59, 61, 67, 73, 79],
+  122: [43, 61, 79],
+  124: [53, 71],
+  126: [47, 53, 59, 67, 73, 79],
+  128: [61, 67],
+  130: [59, 71],
+  132: [53, 59, 61, 71, 73, 79],
+  134: [61, 67, 73],
+  138: [59, 67, 71, 79],
+  140: [61, 67, 73, 79],
+  142: [71],
+  144: [71, 73],
+  146: [67, 73, 79],
+  150: [71, 79],
+  152: [73, 79],
+  158: [79]
+};
+
+
+
+
+
+
+// Esta variable la usaremos para el juego
+let numbersData = [];
+
+    let rondaActual = 1;
+    let totalRondas = 2;
+
+    /* ================================================
+       Referencias a elementos
+       ================================================ */
+    const bgVideo = document.getElementById("bgVideo");
+    const comenzarBtn = document.getElementById("comenzarBtn");
+    const menuOpciones = document.getElementById("menuOpciones");
+    const btnDificultad = document.getElementById("btnDificultad");
+    const btnParticipantes = document.getElementById("btnParticipantes");
+    const btnRondas = document.getElementById("btnRondas");
+    const panelDificultad = document.getElementById("panelDificultad");
+    const panelParticipantes = document.getElementById("panelParticipantes");
+    const panelRondas = document.getElementById("panelRondas");
+    const startBtn = document.getElementById("startBtn");
+    const ruletaSection = document.getElementById("ruletaSection");
+    const timerEl = document.getElementById("timer");
+
+    // Audios
+    const startGameSound = document.getElementById("startGameSound");
+    const optionChangeSound = document.getElementById("optionChangeSound");
+    const ruletaSound = document.getElementById("ruletaSound");
+    const relaxSound = document.getElementById("relaxSound");
+    const normalSound = document.getElementById("normalSound");
+    const countdownSound = document.getElementById("countdownSound");
+    const arcoirisSound = document.getElementById("arcoirisSound");
+
+    /* ================================================
+       Botón "Comenzar"
+       ================================================ */
+    comenzarBtn.addEventListener("click", () => {
+      startGameSound.currentTime = 0;
+      startGameSound.play().catch(e => console.error("Error startGameSound:", e));
+      bgVideo.play().catch(e => console.error("Error reproduciendo video:", e));
+      comenzarBtn.style.display = "none";
+      menuOpciones.style.display = "flex";
+    });
+
+    /* ================================================
+       Menú de opciones
+       ================================================ */
+    btnDificultad.addEventListener("click", () => {
+      panelDificultad.style.display = "block";
+      panelParticipantes.style.display = "none";
+      panelRondas.style.display = "none";
+    });
+    btnParticipantes.addEventListener("click", () => {
+      panelParticipantes.style.display = "block";
+      panelDificultad.style.display = "none";
+      panelRondas.style.display = "none";
+    });
+    btnRondas.addEventListener("click", () => {
+      panelRondas.style.display = "block";
+      panelDificultad.style.display = "none";
+      panelParticipantes.style.display = "none";
+    });
+    panelDificultad.addEventListener("click", (e) => {
+      if(e.target.classList.contains("optionBtn")) {
+        dificultadSeleccionada = e.target.dataset.value;
+        panelDificultad.style.display = "none";
+        checkAllSelections();
+      }
+    });
+    panelParticipantes.addEventListener("click", (e) => {
+      if(e.target.classList.contains("optionBtn")) {
+        participantesSeleccionados = parseInt(e.target.dataset.value);
+        panelParticipantes.style.display = "none";
+        checkAllSelections();
+      }
+    });
+    panelRondas.addEventListener("click", (e) => {
+      if(e.target.classList.contains("optionBtn")) {
+        rondasSeleccionadas = parseInt(e.target.dataset.value);
+        panelRondas.style.display = "none";
+        checkAllSelections();
+      }
+    });
+    function checkAllSelections() {
+      if(dificultadSeleccionada && participantesSeleccionados && rondasSeleccionadas) {
+        startBtn.style.display = "block";
+      }
+    }
+
+    /* ================================================
+       Botón "Start"
+       ================================================ */
+    startBtn.addEventListener("click", () => {
+      startGameSound.pause();
+      menuOpciones.style.display = "none";
+      panelDificultad.style.display = "none";
+      panelParticipantes.style.display = "none";
+      panelRondas.style.display = "none";
+
+      if (dificultadSeleccionada === "ligero") {
+        bgVideo.src = "ligero.mp4";
+        bgVideo.style.display = "block";
+        bgVideo.play().catch(e => console.error("Error reproduciendo video ligero:", e));
+        relaxSound.currentTime = 0;
+        relaxSound.play();
+        numbersData = JSON.parse(JSON.stringify(numbersDataLight));
+      } else {
+        bgVideo.src = "normal.mp4";
+        bgVideo.style.display = "block";
+        bgVideo.play().catch(e => console.error("Error reproduciendo video normal:", e));
+        normalSound.currentTime = 0;
+        normalSound.play();
+        numbersData = JSON.parse(JSON.stringify(numbersDataNormal));
+      }
+
+      
+      totalRondas = rondasSeleccionadas;
+      rondaActual = 1;
+      ruletaSection.style.display = "flex";
+      gameLoop();
+    });
+
+    /* ================================================
+       Función runTimer(duration)
+       ================================================ */
+    function runTimer(duration) {
+      return new Promise((resolve) => {
+        let timeLeft = duration;
+        timerEl.textContent = timeLeft + "s";
+        const interval = setInterval(() => {
+          timeLeft--;
+          if(timeLeft === 5) {
+            if(dificultadSeleccionada === "ligero") {
+              relaxSound.pause();
+            } else {
+              normalSound.pause();
+            }
+            countdownSound.currentTime = 0;
+            countdownSound.play();
+          }
+          timerEl.textContent = timeLeft + "s";
+          if(timeLeft <= 0) {
+            clearInterval(interval);
+            countdownSound.pause();
+            arcoirisSound.currentTime = 0;
+            arcoirisSound.play();
+            resolve();
+          }
+        }, 1000);
+      });
+    }
+
+    /* ================================================
+       Función chooseCenterTopImage()
+       ================================================ */
+    function chooseCenterTopImage() {
+      const options = ["1.png", "2.png", "3.png", "4.png"];
+      return options[Math.floor(Math.random() * options.length)];
+    }
+
+    /* ================================================
+       Función switchCenterTopImage()
+       ================================================ */
+    function switchCenterTopImage() {
+      const imgEl = document.getElementById("centerTopImg");
+      if(imgEl.src.includes("1.png")) {
+        imgEl.src = "2.png";
+      } else if(imgEl.src.includes("2.png")) {
+        imgEl.src = "1.png";
+      } else if(imgEl.src.includes("3.png")) {
+        imgEl.src = "4.png";
+      } else if(imgEl.src.includes("4.png")) {
+        imgEl.src = "3.png";
+      }
+    }
+
+    /* ================================================
+       Función selectNumbers(m, excluded)
+       ================================================ */
+    function selectNumbers(m, excluded = []) {
+      let available = numbersData.filter(n => !excluded.includes(n.num));
+      let chosen = [];
+      for(let i = 0; i < m; i++){
+        let index = Math.floor(Math.random() * available.length);
+        chosen.push(available[index].num);
+        available.splice(index, 1);
+      }
+      return chosen;
+    }
+
+    function selectNumbersWithPrimeRestriction(m, excluded = [], primeUsage) {
+  // Filtra los números disponibles que no estén en 'excluded'
+  let available = numbersData.filter(n => !excluded.includes(n.num));
+  let chosen = [];
+
+  // Función auxiliar para obtener candidatos permitidos según la restricción
+  function allowedCandidates() {
+    return available.filter(item => {
+      let primes = even_primes_dict[item.num];
+      if (!primes) return true; // Si no tiene restricción, se acepta
+      // Se verifica que al agregar este número, ningún primo exceda el límite de 3
+      for (let p of primes) {
+        if ((primeUsage[p] || 0) + 1 > 3) return false;
+      }
+      return true;
+    });
+  }
+
+  let allowed = allowedCandidates();
+  for (let i = 0; i < m && allowed.length > 0; i++) {
+    let index = Math.floor(Math.random() * allowed.length);
+    let selected = allowed[index];
+    chosen.push(selected.num);
+
+    // Actualiza el contador de uso de cada primo del número seleccionado
+    let primes = even_primes_dict[selected.num];
+    if (primes) {
+      for (let p of primes) {
+        primeUsage[p] = (primeUsage[p] || 0) + 1;
+      }
+    }
+
+    // Elimina el número seleccionado de 'available'
+    available = available.filter(item => item.num !== selected.num);
+    // Recalcula la lista de candidatos permitidos
+    allowed = allowedCandidates();
+  }
+
+  return chosen;
+}
+
+
+    /* ================================================
+       Función positionNumbers(numbers)
+       ================================================ */
+    function positionNumbers(numbers) {
+      document.getElementById("topLeft").textContent = "";
+      document.getElementById("topRight").textContent = "";
+      document.getElementById("bottomLeft").textContent = "";
+      document.getElementById("bottomRight").textContent = "";
+      if(numbers.length === 2) {
+        document.getElementById("topLeft").textContent = numbers[0];
+        document.getElementById("topRight").textContent = numbers[1];
+      } else if(numbers.length === 3) {
+        document.getElementById("topLeft").textContent = numbers[0];
+        document.getElementById("topRight").textContent = numbers[1];
+        document.getElementById("bottomLeft").textContent = numbers[2];
+      } else if(numbers.length >= 4) {
+        document.getElementById("topLeft").textContent = numbers[0];
+        document.getElementById("topRight").textContent = numbers[1];
+        document.getElementById("bottomLeft").textContent = numbers[2];
+        document.getElementById("bottomRight").textContent = numbers[3];
+      }
+    }
+
+    /* ================================================
+       Funciones para las etapas
+       ================================================ */
+       async function playStageOne(currentRoundPrimeUsage) {
+
+        // 4. Reproducción de la música de fondo según dificultad
+  if (dificultadSeleccionada === "ligero") {
+    relaxSound.currentTime = 0;
+    relaxSound.play();
+  } else {
+    normalSound.currentTime = 0;
+    normalSound.play();
+  }
+  
+  // 1. Ocultar #tapete y mostrar #centerTopImg con imagen aleatoria
+  document.getElementById("tapete").style.display = "none";
+  document.getElementById("centerTopImg").style.display = "block";
+  let centerImg = chooseCenterTopImage();
+  document.getElementById("centerTopImg").src = centerImg;
+  
+  // 2. Animar los números en las esquinas (efecto ruleta) durante 3 segundos con sonido ruleta.mp3
+  ruletaSound.currentTime = 0;
+  ruletaSound.play();
+  let animationInterval = setInterval(() => {
+    let randomNumbers = [];
+    // Se simula la animación generando números aleatorios para cada participante
+    for (let i = 0; i < participantesSeleccionados; i++) {
+      randomNumbers.push(Math.floor(Math.random() * 100));
+    }
+    positionNumbers(randomNumbers);
+  }, 100);
+  await new Promise(resolve => setTimeout(resolve, 5000));
+  clearInterval(animationInterval);
+  ruletaSound.pause();
+  ruletaSound.currentTime = 0;
+  
+  // 3. Ocultar #centerTopImg y mostrar #tapete
+  document.getElementById("centerTopImg").style.display = "none";
+  document.getElementById("tapete").style.display = "block";
+  
+ 
+  
+  // 5. Selección final de números y posicionarlos en las esquinas
+  let finalSelected = selectNumbers(participantesSeleccionados);
+  positionNumbers(finalSelected);
+  // Guardar los números elegidos en la Etapa 1 para usarlos en la Etapa 2 (si es necesario)
+  stageOneNumbers = finalSelected.slice();
+  
+  // 6. Ejecución del temporizador (30 s)
+  await runTimer(30);
+}
+
+async function playStageTwo(currentRoundPrimeUsage) {
+  // 4. Reproducción de la música de fondo según dificultad
+  if (dificultadSeleccionada === "ligero") {
+    relaxSound.currentTime = 0;
+    relaxSound.play();
+  } else {
+    normalSound.currentTime = 0;
+    normalSound.play();
+  }
+
+  // 1. Ocultar #tapete y mostrar #centerTopImg con nueva imagen aleatoria
+  document.getElementById("tapete").style.display = "none";
+  document.getElementById("centerTopImg").style.display = "block";
+  let centerImg = chooseCenterTopImage();
+  document.getElementById("centerTopImg").src = centerImg;
+  
+  // 2. Animar los números en las esquinas durante 3 segundos con sonido ruleta.mp3
+  ruletaSound.currentTime = 0;
+  ruletaSound.play();
+  let animationInterval = setInterval(() => {
+    let randomNumbers = [];
+    for (let i = 0; i < participantesSeleccionados; i++) {
+      randomNumbers.push(Math.floor(Math.random() * 100));
+    }
+    positionNumbers(randomNumbers);
+  }, 100);
+  await new Promise(resolve => setTimeout(resolve, 5000));
+  clearInterval(animationInterval);
+  ruletaSound.pause();
+  ruletaSound.currentTime = 0;
+  
+  // 3. Ocultar #centerTopImg y mostrar #tapete
+  document.getElementById("centerTopImg").style.display = "none";
+  document.getElementById("tapete").style.display = "block";
+  
+  
+  
+  // 5. Selección final de números, excluyendo los de la Etapa 1, y posicionarlos
+  // Selección final de números con restricción y posición en las esquinas
+  let finalSelected = selectNumbersWithPrimeRestriction(participantesSeleccionados, stageOneNumbers, currentRoundPrimeUsage);
+  positionNumbers(finalSelected);
+stageOneNumbers = finalSelected.slice();
+
+  
+  // 6. Ejecución del temporizador (30 s)
+  await runTimer(30);
+}
+
+
+    /* ================================================
+       Ciclo de juego
+       ================================================ */
+       async function gameLoop() {
+  for (let r = 1; r <= totalRondas; r++){
+    // Reinicia el contador de primos para la ronda actual
+    let currentRoundPrimeUsage = {};
+
+    // Llama a las etapas pasando 'currentRoundPrimeUsage'
+    await playStageOne(currentRoundPrimeUsage);
+    await playStageTwo(currentRoundPrimeUsage);
+
+    if (rondaActual >= 2) {
+      // A partir de la segunda ronda se eliminan 2 números del pool global
+      for (let i = 0; i < 2; i++){
+        if (numbersData.length > 0) {
+          let idx = Math.floor(Math.random() * numbersData.length);
+          numbersData.splice(idx, 1);
+        }
+      }
+    }
+    rondaActual++;
+  }
+  timerEl.textContent = "Juego Terminado";
+}
+
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
